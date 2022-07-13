@@ -1,6 +1,8 @@
 package com.soulmate.community.service;
 
+import com.soulmate.community.dao.LoginTicketMapper;
 import com.soulmate.community.dao.UserMapper;
+import com.soulmate.community.entity.LoginTicket;
 import com.soulmate.community.entity.User;
 //import org.apache.commons.lang3.StringUtils;
 import com.soulmate.community.util.CommunityConstant;
@@ -27,6 +29,9 @@ import java.util.concurrent.TimeUnit;
 public class UserService implements CommunityConstant {
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    LoginTicketMapper loginTicketMapper;
 
     @Autowired
     private MailClient mailClient;
@@ -69,7 +74,7 @@ public class UserService implements CommunityConstant {
             map.put("emailMsg", "邮箱为空啦老弟，让我怎么联系你呢？");
             return map;
         }
-//
+
         // 验证账号
         User u = userMapper.selectByName(user.getUsername());
         if (u != null) {
@@ -125,97 +130,96 @@ public class UserService implements CommunityConstant {
             return ACTIVATION_FAILED;
         }
     }
-//
-//    /**
-//     * 登录
-//     *
-//     * @param username 用户名
-//     * @param password 密码
-//     * @param expiredSeconds 凭证过期时间 秒
-//     * @return
-//     */
-//    public Map<String, Object> login(String username, String password, int expiredSeconds) {
-//        Map<String, Object> map = new HashMap<>(16);
-//
-//        // 空值处理
-//        if (StringUtils.isBlank(username)) {
-//            map.put("usernameMsg", "账号不能为空！");
-//            return map;
-//        }
-//        if (StringUtils.isBlank(password)) {
-//            map.put("passwordMsg", "密码不能为空！");
-//            return map;
-//        }
-//        // 验证账号
-//        User user = userMapper.selectByName(username);
-//        if (user == null) {
-//            map.put("usernameMsg", "该账号不存在！");
-//            return map;
-//        }
-//
-//        // 验证状态
-//        if (user.getStatus() == 0) {
-//            map.put("usernameMsg", "该账号未激活！");
-//            return map;
-//        }
-//        // 验证密码
-//        password = CommunityUtil.md5(password + user.getSalt());
-//        if (!user.getPassword().equals(password)) {
-//            map.put("passwordMsg", "密码不正确！");
-//            return map;
-//        }
-//
-//        // 生成登录凭证
-//
-//        LoginTicket loginTicket = new LoginTicket();
-//        loginTicket.setUserId(user.getId());
-//        loginTicket.setTicket(CommunityUtil.generateUUID());
-//        loginTicket.setStatus(0);
-//        loginTicket.setExpired(new Date(System.currentTimeMillis() + expiredSeconds * 1000));
-//        //        loginTicketMapper.insertLoginTicket(loginTicket);
-//
+
+    /**
+     * 登录
+     *
+     * @param username 用户名
+     * @param password 密码
+     * @param expiredSeconds 凭证过期时间 秒
+     * @return
+     */
+    public Map<String, Object> login(String username, String password, int expiredSeconds) {
+        Map<String, Object> map = new HashMap<>(16);
+
+        // 空值处理
+        if (StringUtils.isBlank(username)) {
+            map.put("usernameMsg", "账号不能为空！");
+            return map;
+        }
+        if (StringUtils.isBlank(password)) {
+            map.put("passwordMsg", "密码不能为空！");
+            return map;
+        }
+        // 验证账号
+        User user = userMapper.selectByName(username);
+        if (user == null) {
+            map.put("usernameMsg", "该账号不存在！");
+            return map;
+        }
+
+        // 验证状态
+        if (user.getStatus() == 0) {
+            map.put("usernameMsg", "该账号未激活！");
+            return map;
+        }
+        // 验证密码
+        password = CommunityUtil.md5(password + user.getSalt());
+        if (!user.getPassword().equals(password)) {
+            map.put("passwordMsg", "密码不正确！");
+            return map;
+        }
+
+        // 如果用户登录合法，生成登录凭证，保存在数据库中（session）
+        LoginTicket loginTicket = new LoginTicket();
+        loginTicket.setUserId(user.getId());
+        loginTicket.setTicket(CommunityUtil.generateUUID());
+        loginTicket.setStatus(0);
+        loginTicket.setExpired(new Date(System.currentTimeMillis() + expiredSeconds * 1000));
+        loginTicketMapper.insertLoginTicket(loginTicket);
+
 //        String redisKey = RedisKeyUtil.getTicketKey(loginTicket.getTicket());
 //        // loginTicket会序列化成json
 //        redisTemplate.opsForValue().set(redisKey, loginTicket);
-//
-//        map.put("ticket", loginTicket.getTicket());
-//        return map;
-//    }
-//
-//    public void logout(String ticket) {
-//        //        loginTicketMapper.updateStatus(ticket, 1);
+
+        map.put("ticket", loginTicket.getTicket());
+        return map;
+    }
+
+    public void logout(String ticket) {
+        loginTicketMapper.updateStatus(ticket, 1);
 //        String redisKey = RedisKeyUtil.getTicketKey(ticket);
 //        LoginTicket loginTicket = (LoginTicket) redisTemplate.opsForValue().get(redisKey);
 //        loginTicket.setStatus(1);
 //        redisTemplate.opsForValue().set(redisKey, loginTicket);
-//    }
-//
-//    /**
-//     * 通过ticket查询LoginTicket对象
-//     *
-//     * @param ticket
-//     * @return
-//     */
-//    public LoginTicket findLoginTicket(String ticket) {
-//        //        return loginTicketMapper.selectByTicket(ticket);
+    }
+
+    /**
+     * 通过ticket查询LoginTicket对象
+     *
+     * @param ticket
+     * @return
+     */
+    public LoginTicket findLoginTicket(String ticket) {
+        return loginTicketMapper.selectByTicket(ticket);
 //        String redisKey = RedisKeyUtil.getTicketKey(ticket);
 //        return (LoginTicket) redisTemplate.opsForValue().get(redisKey);
-//    }
-//
-//    /**
-//     * 更新头像
-//     *
-//     * @param userId
-//     * @param headerUrl
-//     * @return
-//     */
-//    public int updateHeader(int userId, String headerUrl) {
-//        //        return userMapper.updateHeader(userId, headerUrl);
+    }
+
+    /**
+     * 更新头像
+     *
+     * @param userId
+     * @param headerUrl
+     * @return
+     */
+    public int updateHeader(int userId, String headerUrl) {
+        return userMapper.updateHeader(userId, headerUrl);
 //        int rows = userMapper.updateHeader(userId, headerUrl);
 //        clearCache(userId);
 //        return rows;
-//    }
-//
+    }
+
 //    /**
 //     * 通过用户名查找用户
 //     *
@@ -279,15 +283,15 @@ public class UserService implements CommunityConstant {
 //        return list;
 //    }
 //
-//    /**
-//     * 更新密码
-//     *
-//     * @param id
-//     * @param newPassword
-//     * @return
-//     */
-//    public int updatePassword(int id, String newPassword) {
+    /**
+     * 更新密码
+     *
+     * @param id
+     * @param newPassword
+     * @return
+     */
+    public int updatePassword(int id, String newPassword) {
 //        clearCache(id);
-//        return userMapper.updatePassword(id, newPassword);
-//    }
+        return userMapper.updatePassword(id, newPassword);
+    }
 }

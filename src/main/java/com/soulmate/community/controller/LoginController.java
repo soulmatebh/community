@@ -2,9 +2,12 @@ package com.soulmate.community.controller;
 
 //import com.google.code.kaptcha.Producer;
 //import org.apache.commons.lang3.StringUtils;
+import com.google.code.kaptcha.Producer;
 import com.soulmate.community.entity.User;
 import com.soulmate.community.service.UserService;
 import com.soulmate.community.util.CommunityConstant;
+import com.soulmate.community.util.CommunityUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import javax.imageio.ImageIO;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,11 +37,11 @@ public class LoginController implements CommunityConstant {
     @Autowired
     private UserService userService;
 
-//    @Autowired
-//    private Producer kaptchaProducer;
+    @Autowired
+    private Producer kaptchaProducer;
 
-//    @Value("${server.servlet.context-path}")
-//    private String contextPath;
+    @Value("${server.servlet.context-path}")
+    private String contextPath;
 
 //    @Autowired
 //    private RedisTemplate redisTemplate;
@@ -54,15 +58,15 @@ public class LoginController implements CommunityConstant {
         return "/site/login";
     }
 
-//    @GetMapping("/kaptcha")
-//    public void getKaptcha(HttpServletResponse response /*, HttpSession session*/) {
-//        // 生成验证码
-//        String text = kaptchaProducer.createText();
-//        BufferedImage image = kaptchaProducer.createImage(text);
-//
-//        // 将验证码存入session
-//        // session.setAttribute("kaptcha", text);
-//
+    @GetMapping("/kaptcha")
+    public void getKaptcha(HttpServletResponse response, HttpSession session) {
+        // 生成验证码
+        String text = kaptchaProducer.createText();
+        BufferedImage image = kaptchaProducer.createImage(text);
+
+        // 将验证码存入session
+         session.setAttribute("kaptcha", text);
+
 //        // 验证码的归属
 //        String kaptchaOwner = CommunityUtil.generateUUID();
 //        Cookie cookie = new Cookie("kaptchaOwner", kaptchaOwner);
@@ -72,15 +76,15 @@ public class LoginController implements CommunityConstant {
 //        // 将验证码存入Redis
 //        String redisKey = RedisKeyUtil.getKaptchaKey(kaptchaOwner);
 //        redisTemplate.opsForValue().set(redisKey, text, 60, TimeUnit.SECONDS);
-//
-//        // 将图片输出给浏览器
-//        try {
-//            OutputStream os = response.getOutputStream();
-//            ImageIO.write(image, "png", os);
-//        } catch (IOException e) {
-//            LOGGER.error("响应验证码失败：" + e.getMessage());
-//        }
-//    }
+
+        // 将图片输出给浏览器
+        try {
+            OutputStream os = response.getOutputStream();
+            ImageIO.write(image, "png", os);
+        } catch (IOException e) {
+            LOGGER.error("响应验证码失败：" + e.getMessage());
+        }
+    }
 
     @PostMapping("/register")
     public String register(Model model, User user) {
@@ -133,52 +137,52 @@ public class LoginController implements CommunityConstant {
         return "site/operate-result";
     }
 
-//    @PostMapping("/login")
-//    public String login(
-//            String username,
-//            String password,
-//            String code,
-//            boolean rememberme,
-//            Model model, /* HttpSession session,*/
-//            HttpServletResponse response,
-//            @CookieValue("kaptchaOwner") String kaptchaOwner) {
-//        // 检查验证码
-//        //        String kaptcha = (String) session.getAttribute("kaptcha");
+    @PostMapping("/login")
+    public String login(
+            String username,
+            String password,
+            String code,
+            boolean rememberme,     //记住我选项
+            Model model, HttpSession session,
+            HttpServletResponse response /*,
+            @CookieValue("kaptchaOwner") String kaptchaOwner */) {
+        // 检查验证码
+        String kaptcha = (String) session.getAttribute("kaptcha");
 //        String kaptcha = null;
 //        if (StringUtils.isNoneBlank(kaptchaOwner)) {
 //            String redisKey = RedisKeyUtil.getKaptchaKey(kaptchaOwner);
 //            kaptcha = (String) redisTemplate.opsForValue().get(redisKey);
 //        }
-//
-//        if (StringUtils.isBlank(kaptcha)
-//                || StringUtils.isBlank(code)
-//                || !kaptcha.equalsIgnoreCase(code)) {
-//            model.addAttribute("codeMsg", "验证码不正确！");
-//            return "site/login";
-//        }
-//        // 检查账号，密码
-//        int expiredSeconds = rememberme ? REMEMBER_EXPIRED_SECONDS : DEFAULT_EXPIRED_SECONDS;
-//        //        System.out.println(rememberme);
-//
-//        Map<String, Object> map = userService.login(username, password, expiredSeconds);
-//        String key = "ticket";
-//        if (map.containsKey(key)) {
-//            Cookie cookie = new Cookie("ticket", map.get("ticket").toString());
-//            cookie.setPath(contextPath);
-//            cookie.setMaxAge(expiredSeconds);
-//            response.addCookie(cookie);
-//            return "redirect:/";
-//        } else {
-//            model.addAttribute("usernameMsg", map.get("usernameMsg"));
-//            model.addAttribute("passwordMsg", map.get("passwordMsg"));
-//            return "site/login";
-//        }
-//    }
 
-//    @GetMapping("/logout")
-//    public String logout(@CookieValue("ticket") String ticket) {
-//        userService.logout(ticket);
+        if (StringUtils.isBlank(kaptcha)
+                || StringUtils.isBlank(code)
+                || !kaptcha.equalsIgnoreCase(code)) {
+            model.addAttribute("codeMsg", "验证码不正确！");
+            return "site/login";
+        }
+        // 检查账号，密码
+        int expiredSeconds = rememberme ? REMEMBER_EXPIRED_SECONDS : DEFAULT_EXPIRED_SECONDS;
+        //        System.out.println(rememberme);
+
+        Map<String, Object> map = userService.login(username, password, expiredSeconds);
+        String key = "ticket";
+        if (map.containsKey(key)) {
+            Cookie cookie = new Cookie("ticket", map.get("ticket").toString());
+            cookie.setPath(contextPath);
+            cookie.setMaxAge(expiredSeconds);
+            response.addCookie(cookie);
+            return "redirect:/index";
+        } else {
+            model.addAttribute("usernameMsg", map.get("usernameMsg"));
+            model.addAttribute("passwordMsg", map.get("passwordMsg"));
+            return "/site/login";
+        }
+    }
+
+    @GetMapping("/logout")
+    public String logout(@CookieValue("ticket") String ticket) {
+        userService.logout(ticket);
 //        SecurityContextHolder.clearContext();
-//        return "redirect:/login";
-//    }
+        return "redirect:/login";
+    }
 }
