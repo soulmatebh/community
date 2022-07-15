@@ -2,7 +2,10 @@ package com.soulmate.community.controller;
 
 import com.soulmate.community.annotation.LoginRequired;
 import com.soulmate.community.entity.User;
+import com.soulmate.community.service.FollowService;
+import com.soulmate.community.service.LikeService;
 import com.soulmate.community.service.UserService;
+import com.soulmate.community.util.CommunityConstant;
 import com.soulmate.community.util.CommunityUtil;
 import com.soulmate.community.util.HostHolder;
 import org.apache.commons.lang3.StringUtils;
@@ -28,7 +31,7 @@ import java.io.OutputStream;
  */
 @Controller
 @RequestMapping("/user")
-public class UserController {
+public class UserController implements CommunityConstant {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginController.class);
 
@@ -47,9 +50,9 @@ public class UserController {
     @Autowired
     private HostHolder hostHolder;
 
-//    @Autowired private LikeService likeService;
+    @Autowired private LikeService likeService;
 
-//    @Autowired private FollowService followService;
+    @Autowired private FollowService followService;
 
 //    @Value("${qiniu.key.access}")
 //    private String accessKey;
@@ -153,37 +156,37 @@ public class UserController {
             LOGGER.error("读取文件失败：", e.getMessage());
         }
     }
-//
-//    @GetMapping("/profile/{userId}")
-//    public String getProfilePage(@PathVariable("userId") int userId, Model model) {
-//        User user = userService.findUserById(userId);
-//        if (user == null) {
-//            throw new RuntimeException("该用户不存在");
-//        }
-//        // 用户
-//        model.addAttribute("user", user);
-//        // 点赞数量
-//        int likeCount = likeService.findUserLikeCount(userId);
-//        model.addAttribute("likeCount", likeCount);
-//
-//        // 关注数量
-//        long followeeCount = followService.findFolloweeCount(userId, ENTITY_TYPE_USER);
-//        model.addAttribute("followeeCount", followeeCount);
-//
-//        // 粉丝数量
-//        long followerCount = followService.findFollowerCount(ENTITY_TYPE_USER, userId);
-//        model.addAttribute("followerCount", followerCount);
-//
-//        // 是否已关注
-//        boolean hasFollowed = false;
-//        if (hostHolder.getUser() != null) {
-//            hasFollowed =
-//                    followService.hasFollowed(
-//                            hostHolder.getUser().getId(), ENTITY_TYPE_USER, userId);
-//        }
-//        model.addAttribute("hasFollowed", hasFollowed);
-//        return "site/profile";
-//    }
+
+    @GetMapping("/profile/{userId}")
+    public String getProfilePage(@PathVariable("userId") int userId, Model model) {
+        User user = userService.findUserById(userId);
+        if (user == null) {
+            throw new RuntimeException("该用户不存在");
+        }
+        // 用户
+        model.addAttribute("user", user);
+        // 点赞数量
+        int likeCount = likeService.findUserLikeCount(userId);
+        model.addAttribute("likeCount", likeCount);
+
+        // 关注数量
+        long followeeCount = followService.findFolloweeCount(userId, ENTITY_TYPE_USER);
+        model.addAttribute("followeeCount", followeeCount);
+
+        // 粉丝数量
+        long followerCount = followService.findFollowerCount(ENTITY_TYPE_USER, userId);
+        model.addAttribute("followerCount", followerCount);
+
+        // 是否已关注
+        boolean hasFollowed = false;
+        if (hostHolder.getUser() != null) {
+            hasFollowed =
+                    followService.hasFollowed(
+                            hostHolder.getUser().getId(), ENTITY_TYPE_USER, userId);
+        }
+        model.addAttribute("hasFollowed", hasFollowed);
+        return "/site/profile";
+    }
 //
 //    /**
 //     * 更新头像路径

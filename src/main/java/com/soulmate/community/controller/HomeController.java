@@ -4,7 +4,10 @@ import com.soulmate.community.entity.DiscussPost;
 import com.soulmate.community.entity.Page;
 import com.soulmate.community.entity.User;
 import com.soulmate.community.service.DiscussPostService;
+import com.soulmate.community.service.LikeService;
 import com.soulmate.community.service.UserService;
+import com.soulmate.community.util.CommunityConstant;
+import com.soulmate.community.util.CommunityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,23 +25,52 @@ import java.util.Map;
  * community
  */
 @Controller
-public class HomeController {
+public class HomeController implements CommunityConstant {
     @Autowired
     private DiscussPostService discussPostService;
     @Autowired
     private UserService userService;
 
-//    @Autowired
-//    private LikeService likeService;
+    @Autowired
+    private LikeService likeService;
+
+
+//    @GetMapping("/index")
+//    public String getIndexPage(Model model, Page page) {
+//        // 方法调用栈，SpringMVC会自动实例化Model和Page，并将Page注入Model
+//        // 所以，在thymeleaf中可以直接访问Page对象中的数据
+//        page.setRows(discussPostService.findDiscussPostRows(0));
+//        page.setPath("/index");
+//
+//        List<DiscussPost> list = discussPostService.findDiscussPosts(0, page.getOffset(), page.getLimit(), 1);
+//        List<Map<String, Object>> discussPosts = new ArrayList<>();
+//        if (list != null) {
+//            for (DiscussPost post : list) {
+//                Map<String, Object> map = new HashMap<>(16);
+//                map.put("post", post);
+//                User user = userService.findUserById(post.getUserId());
+//                map.put("user", user);
+//
+//                discussPosts.add(map);
+//            }
+//        }
+//        model.addAttribute("discussPosts", discussPosts);
+//        return "/index";
+//    }
+
 
 
     @GetMapping("/index")
-    public String getIndexPage(Model model, Page page) {
+    public String getIndexPage(
+            Model model,
+            Page page/*,
+            @RequestParam(name = "orderMode", defaultValue = "0") int orderMode*/) {
         // 方法调用栈，SpringMVC会自动实例化Model和Page，并将Page注入Model
         // 所以，在thymeleaf中可以直接访问Page对象中的数据
         page.setRows(discussPostService.findDiscussPostRows(0));
         page.setPath("/index");
-
+//        page.setPath("/?orderMode=" + orderMode);
+//        List<DiscussPost> list = discussPostService.findDiscussPosts(0, page.getOffset(), page.getLimit(), orderMode);
         List<DiscussPost> list = discussPostService.findDiscussPosts(0, page.getOffset(), page.getLimit(), 1);
         List<Map<String, Object>> discussPosts = new ArrayList<>();
         if (list != null) {
@@ -48,45 +80,16 @@ public class HomeController {
                 User user = userService.findUserById(post.getUserId());
                 map.put("user", user);
 
+                long likeCount = likeService.findEntityLikeCount(ENTITY_TYPE_POST, post.getId());
+                map.put("likeCount", likeCount);
+
                 discussPosts.add(map);
             }
         }
         model.addAttribute("discussPosts", discussPosts);
+//        model.addAttribute("orderMode", orderMode);
         return "/index";
     }
-
-
-
-//    @GetMapping("/index")
-//    public String getIndexPage(
-//            Model model,
-//            Page page,
-//            @RequestParam(name = "orderMode", defaultValue = "0") int orderMode) {
-//        // 方法调用栈，SpringMVC会自动实例化Model和Page，并将Page注入Model
-//        // 所以，在thymeleaf中可以直接访问Page对象中的数据
-//        page.setRows(discussPostService.findDiscussPostRows(0));
-//        page.setPath("/?orderMode=" + orderMode);
-//        List<DiscussPost> list =
-//                discussPostService.findDiscussPosts(
-//                        0, page.getOffset(), page.getLimit(), orderMode);
-//        List<Map<String, Object>> discussPosts = new ArrayList<>();
-//        if (list != null) {
-//            for (DiscussPost post : list) {
-//                Map<String, Object> map = new HashMap<>(16);
-//                map.put("post", post);
-//                User user = userService.findUserById(post.getUserId());
-//                map.put("user", user);
-//
-//                long likeCount = likeService.findEntityLikeCount(ENTITY_TYPE_POST, post.getId());
-//                map.put("likeCount", likeCount);
-//
-//                discussPosts.add(map);
-//            }
-//        }
-//        model.addAttribute("discussPosts", discussPosts);
-//        model.addAttribute("orderMode", orderMode);
-//        return "index";
-//    }
 
     @GetMapping("/error")
     public String getErrorPage() {

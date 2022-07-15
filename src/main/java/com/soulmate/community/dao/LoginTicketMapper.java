@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.*;
  * @date 2021/3/15
  */
 @Mapper
-//@Deprecated
+@Deprecated
 public interface LoginTicketMapper {
     /**
      * 插入login_ticket表（通过注解不用谢xml SQL查询文件）
