@@ -220,15 +220,15 @@ public class UserService implements CommunityConstant {
 //        return rows;
     }
 
-//    /**
-//     * 通过用户名查找用户
-//     *
-//     * @param username
-//     * @return
-//     */
-//    public User findUserByName(String username) {
-//        return userMapper.selectByName(username);
-//    }
+    /**
+     * 通过用户名查找用户
+     *
+     * @param username
+     * @return
+     */
+    public User findUserByName(String username) {
+        return userMapper.selectByName(username);
+    }
 //
 //    /**
 //     * 1.优先从缓存中取值

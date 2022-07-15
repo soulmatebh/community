@@ -2,9 +2,11 @@ package com.soulmate.community;
 
 import com.soulmate.community.dao.DiscussPostMapper;
 import com.soulmate.community.dao.LoginTicketMapper;
+import com.soulmate.community.dao.MessageMapper;
 import com.soulmate.community.dao.UserMapper;
 import com.soulmate.community.entity.DiscussPost;
 import com.soulmate.community.entity.LoginTicket;
+import com.soulmate.community.entity.Message;
 import com.soulmate.community.entity.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,9 @@ public class MapperTest {
 
     @Autowired
     LoginTicketMapper loginTicketMapper;
+
+    @Autowired
+    MessageMapper messageMapper;
 
     @Test
     public void testUser() {
@@ -65,5 +70,23 @@ public class MapperTest {
         LoginTicket ticket2 = loginTicketMapper.selectByTicket("asd");
         System.out.println(ticket2);
 
+    }
+
+    @Test
+    public void testMessage() {
+        List<Message> messages = messageMapper.selectConversations(111, 0, 20);
+        messages.forEach(a -> System.out.println(a));
+
+        int i = messageMapper.selectConversationCount(111);
+        System.out.println(i);
+
+        List<Message> messages1 = messageMapper.selectLetters("111_112", 0, 10);
+        messages1.forEach(a -> System.out.println(a));
+
+        int i1 = messageMapper.selectLetterCount("111_112");
+        System.out.println(i1);
+
+        int i2 = messageMapper.selectLetterUnreadCount(131, "111_131");
+        System.out.println(i2);
     }
 }
