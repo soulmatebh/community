@@ -68,7 +68,7 @@ public class MessageController implements CommunityConstant {
         int noticeUnreadCount =
                 messageService.findNoticeUnreadCount(hostHolder.getUser().getId(), null);
         model.addAttribute("noticeUnreadCount", noticeUnreadCount);
-        return "site/letter";
+        return "/site/letter";
     }
 
     @GetMapping("/letter/detail/{conversationId}")
@@ -91,7 +91,6 @@ public class MessageController implements CommunityConstant {
                 letters.add(map);
             }
         }
-//        model.addAttribute("letters", letters);
         model.addAttribute("letters", letters);
 
         // 私信目标
@@ -103,7 +102,7 @@ public class MessageController implements CommunityConstant {
             messageService.readMessage(ids);
         }
 
-        return "site/letter-detail";
+        return "/site/letter-detail";
     }
 
     /**
@@ -186,7 +185,7 @@ public class MessageController implements CommunityConstant {
         int noticeCount = messageService.findNoticeCount(hostHolder.getUser().getId(), null);
         model.addAttribute("noticeCount", noticeCount);
 
-        return "site/notice";
+        return "/site/notice";
     }
 
     private Map<String, Object> getNoticeVO(String topicType) {
@@ -195,7 +194,7 @@ public class MessageController implements CommunityConstant {
         Map<String, Object> messageVO = new HashMap<>(16);
         if (message != null) {
             messageVO.put("message", message);
-            String content = HtmlUtils.htmlUnescape(message.getContent());
+            String content = HtmlUtils.htmlUnescape(message.getContent());      //转义字符
             Map<String, Object> data = JSONObject.parseObject(content, HashMap.class);
             messageVO.put("user", userService.findUserById((Integer) data.get("userId")));
             messageVO.put("entityType", data.get("entityType"));
@@ -253,6 +252,6 @@ public class MessageController implements CommunityConstant {
         if (!ids.isEmpty()) {
             messageService.readMessage(ids);
         }
-        return "site/notice-detail";
+        return "/site/notice-detail";
     }
 }

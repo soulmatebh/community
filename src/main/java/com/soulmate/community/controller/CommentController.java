@@ -2,13 +2,16 @@ package com.soulmate.community.controller;
 
 import com.soulmate.community.entity.Comment;
 import com.soulmate.community.entity.DiscussPost;
+import com.soulmate.community.entity.Event;
 import com.soulmate.community.entity.User;
+import com.soulmate.community.event.EventProducer;
 import com.soulmate.community.service.CommentService;
 import com.soulmate.community.service.DiscussPostService;
 import com.soulmate.community.util.CommunityConstant;
 import com.soulmate.community.util.HostHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,14 +33,14 @@ public class CommentController implements CommunityConstant {
     @Autowired
     private HostHolder hostHolder;
 
-//    @Autowired
-//    private EventProducer eventProducer;
+    @Autowired
+    private EventProducer eventProducer;
 
     @Autowired
     private DiscussPostService discussPostService;
 
-//    @Autowired
-//    private RedisTemplate redisTemplate;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 添加评论
@@ -54,22 +57,22 @@ public class CommentController implements CommunityConstant {
         comment.setCreateTime(new Date());
         commentService.addComment(comment);
 
-//        // 触发事件
-//        Event event =
-//                new Event()
-//                        .setTopic(TOPIC_COMMENT)
-//                        .setUserId(comment.getUserId())
-//                        .setEntityType(comment.getEntityType())
-//                        .setEntityId(comment.getEntityId())
-//                        .setData("postId", discussPostId);
-//        if (comment.getEntityType() == ENTITY_TYPE_POST) {
-//            DiscussPost target = discussPostService.findDiscussPostById(comment.getEntityId());
-//            event.setEntityUserId(target.getUserId());
-//        } else if (comment.getEntityType() == ENTITY_TYPE_COMMENT) {
-//            Comment target = commentService.findCommentsById(comment.getEntityId());
-//            event.setEntityUserId(target.getUserId());
-//        }
-//        eventProducer.fireEvent(event);
+        // 触发评论事件
+        Event event =
+                new Event()
+                        .setTopic(TOPIC_COMMENT)            //链式赋值（动态选择哪些属性赋值）
+                        .setUserId(comment.getUserId())
+                        .setEntityType(comment.getEntityType())
+                        .setEntityId(comment.getEntityId())
+                        .setData("postId", discussPostId);
+        if (comment.getEntityType() == ENTITY_TYPE_POST) {
+            DiscussPost target = discussPostService.findDiscussPostById(comment.getEntityId());
+            event.setEntityUserId(target.getUserId());          //帖子主人的userId
+        } else if (comment.getEntityType() == ENTITY_TYPE_COMMENT) {
+            Comment target = commentService.findCommentsById(comment.getEntityId());
+            event.setEntityUserId(target.getUserId());
+        }
+        eventProducer.fireEvent(event);
 //
 //        if (comment.getEntityType() == ENTITY_TYPE_POST) {
 //            // 触发发帖事件
